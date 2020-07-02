@@ -1,0 +1,14 @@
+[package]
+authors = ["Aster <192607617@qq.com>"]
+description = "..."
+edition = "2018"
+license = "MPL-2.0"
+name = "kejin"
+readme = "README.md"
+repository = "https://github.com/GalAster/Libs-of-Kejin"
+version = "0.0.1"
+
+[dependencies]
+carbon-dump = "1.2.0"
+lazy_static = "1.4.0"
+syntect = "3.2"
