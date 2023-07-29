@@ -1,2 +1,7 @@
+# IDE
+.idea/**
+
+
 # Rust
-**/Cargo.lock
+Cargo.lock
+yarn-error.log
