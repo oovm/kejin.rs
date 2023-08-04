@@ -1,27 +1,44 @@
 use crate::Gacha;
 use rand::Rng;
-use std::{cell::RefCell, collections::BTreeSet, ops::AddAssign};
+use std::{cell::RefCell, collections::BTreeSet, num::NonZeroUsize, ops::AddAssign};
 
 /// Hard guarantee card draw mechanism, if the number of guarantees is reached and the limited card is still not obtained, the card will be issued forcibly
 pub struct GuaranteeDraw<G: Gacha> {
     pub current: RefCell<usize>,
-    pub max: usize,
     pub normal: G,
-    pub guarantee: G,
+    pub guarantee: Vec<GuaranteeCondition<G>>,
 }
 
 pub struct GuaranteeCondition<G: Gacha> {
-    pub max: usize,
-    pub gacha: G,
-    pub reset: BTreeSet<G::Output>,
+    pub items: G,
+    pub max: Option<NonZeroUsize>,
+    pub reset: fn(G::Output) -> bool,
 }
 
 impl<G: Gacha> GuaranteeDraw<G> {
-    pub fn new(model: G, guarantee: G, max: usize) -> Self {
-        Self { current: RefCell::new(0), max, normal: model, guarantee }
+    pub fn new(cards: G) -> Self {
+        Self { current: RefCell::new(0), normal: cards, guarantee: vec![] }
     }
     pub fn with_current(mut self, current: usize) -> Self {
         self.current = RefCell::new(current);
+        self
+    }
+    pub fn with_guarantee(mut self, guarantee: GuaranteeCondition<G>) -> Self {
+        self.guarantee.push(guarantee);
+        self
+    }
+}
+
+impl<G: Gacha> GuaranteeCondition<G> {
+    pub fn new(cards: G) -> Self {
+        Self { items: cards, max: None, reset: |_| false }
+    }
+    pub fn with_max(mut self, max: usize) -> Self {
+        self.max = NonZeroUsize::new(max);
+        self
+    }
+    pub fn with_reset(mut self, reset: fn(G::Output) -> bool) -> Self {
+        self.reset = reset;
         self
     }
 }
