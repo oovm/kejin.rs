@@ -1,0 +1,19 @@
+[package]
+name = "gacha"
+version = "0.0.1"
+authors = ["Aster <192607617@qq.com>"]
+description = "Hamiltonian path solver"
+repository = "https://github.com/oovm/knights-tour"
+documentation = "https://docs.rs/hamiltonian"
+readme = "Readme.md"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+itertools = "0.10.5"
+rand = { version = "0.8.5", features = ["small_rng"] }
+
+[dev-dependencies]
+
+[features]
+default = []

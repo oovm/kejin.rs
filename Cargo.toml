@@ -1,0 +1,12 @@
+[workspace]
+members = ["projects/*"]
+default-members = [
+    "projects/kejin",
+]
+exclude = [
+    "projects/.DS_Store",
+]
+
+[profile.release]
+lto = true
+panic = "abort"
