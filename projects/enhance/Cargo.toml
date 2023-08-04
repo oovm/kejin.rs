@@ -1,10 +1,10 @@
 [package]
 name = "enhance"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Aster <192607617@qq.com>"]
 description = "Estimate resource requirements for enhance equipments"
 repository = "https://github.com/oovm/knights-tour"
-documentation = "https://docs.rs/hamiltonian"
+documentation = "https://docs.rs/enhance"
 readme = "Readme.md"
 license = "MPL-2.0"
 edition = "2021"

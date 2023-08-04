@@ -1,3 +1,7 @@
+mod advance;
 mod basic;
 
-pub use self::basic::{level::EnhanceLevel, state::EnhanceState};
+pub use self::{
+    advance::EnhanceModifier,
+    basic::{level::EnhanceLevel, state::EnhanceState},
+};

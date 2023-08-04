@@ -17,13 +17,10 @@ pub struct EnhanceLevel<T, R> {
     /// The amount of resources that need to be consumed for strengthening
     #[cfg_attr(feature = "serde", serde(default))]
     pub enhance_cost: BTreeMap<T, u128>,
-    /// The number of resources that need to be consumed in order to prevent failure penalties
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub relegate_cost: BTreeMap<T, u128>,
-    /// The number of resources that need to be consumed in order to prevent broken penalties
-    #[cfg_attr(feature = "serde", serde(default))]
-    pub protect_cost: BTreeMap<T, u128>,
 }
+
+
+
 
 impl<T, R> EnhanceLevel<T, R> {
     /// Create a simple reinforcement model
@@ -39,17 +36,15 @@ impl<T, R> EnhanceLevel<T, R> {
     /// ```
     ///
     /// ```
-    pub fn simple(success: R, failure: R, change: i16) -> Self {
+    pub fn simple(success: R, failure: R, change: i16) -> Self where R:Default {
         let mut relative_rate = BTreeMap::new();
         relative_rate.insert(1, success);
         relative_rate.insert(change, failure);
         Self {
             relative_rate,
             absolute_rate: BTreeMap::new(),
-            broken_rate,
+            broken_rate: Default::default(),
             enhance_cost: BTreeMap::new(),
-            relegate_cost: BTreeMap::new(),
-            protect_cost: BTreeMap::new(),
         }
     }
 
