@@ -1,4 +1,4 @@
-use gacha::WeightedList;
+use gacha::{Gacha, WeightedList};
 use rand::{prelude::StdRng, SeedableRng};
 
 #[test]
@@ -14,5 +14,8 @@ fn test_weighted_list_shuffle() {
 
     let mut rng = StdRng::from_entropy();
     let shuffled_items = weighted_list.shuffle(&mut rng);
+
+    assert!(weighted_list.contains(shuffled_items.first().unwrap()));
+
     println!("{:?}", shuffled_items);
 }

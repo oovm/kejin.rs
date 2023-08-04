@@ -4,6 +4,7 @@ mod builder;
 mod display;
 mod sample;
 
+use crate::Gacha;
 use rand::Rng;
 use std::{collections::BTreeMap, mem::take, ops::AddAssign, slice::Iter};
 
@@ -40,21 +41,28 @@ impl<T> WeightedList<T> {
         }
         self.items = WeightedList::from_iter(new).items;
     }
-    /// Randomly select an element based on weight, the higher the weight, the easier it is to be selected.
-    pub fn random(&self, mut rng: impl Rng) -> Option<&T> {
-        if self.items.is_empty() {
-            return None;
-        }
-        let total_weight = self.total_weight();
-        let random_weight = rng.gen_range(0.0..total_weight);
-        let index = self
-            .items
-            .binary_search_by(|elem| elem.accumulated.total_cmp(&random_weight)) //
-            .unwrap_or_else(|i| i);
-        Some(&self.items[index].key)
+}
+
+impl<T> Gacha for WeightedList<T> {
+    type Output = T;
+
+    fn items(&self) -> usize {
+        self.items.len()
     }
-    /// Rearrange all elements according to weight, the higher the weight, the higher the front.
-    pub fn shuffle(&self, mut rng: impl Rng) -> Vec<&T> {
+
+    fn contains(&self, other: &Self::Output) -> bool
+    where
+        Self::Output: PartialEq,
+    {
+        for item in &self.items {
+            if item.key.eq(other) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    fn shuffle(&self, mut rng: impl Rng) -> Vec<&Self::Output> {
         if self.items.is_empty() {
             return vec![];
         }
@@ -69,26 +77,33 @@ impl<T> WeightedList<T> {
         // Extract the shuffled items using the sorted order
         order.iter().map(|(i, _)| &self.items[*i].key).collect()
     }
-    /// Select n elements according to the weight, the higher the weight, the easier it is to be selected
-    pub fn random_select(&self, count: usize, mut rng: impl Rng) -> Vec<&T> {
+
+    fn random_next(&self, mut rng: impl Rng) -> Option<&Self::Output> {
+        if self.items.is_empty() {
+            panic!("No items in the list");
+        }
+        let total_weight = self.total_weight();
+        let random_weight = rng.gen_range(0.0..total_weight);
+        let index = self
+            .items
+            .binary_search_by(|elem| elem.accumulated.total_cmp(&random_weight)) //
+            .unwrap_or_else(|i| i);
+        Some(&self.items[index].key)
+    }
+    fn random_select(&self, count: usize, mut rng: impl Rng) -> Vec<&Self::Output> {
         match self.items.len() {
             0 => return vec![],
             1 => return vec![&self.items[0].key; count],
             _ => {
                 let mut out = Vec::with_capacity(count);
                 for _ in 0..count {
-                    if let Some(item) = self.random(&mut rng) {
-                        out.push(item);
+                    match self.random_next(&mut rng) {
+                        Some(s) => out.push(s),
+                        None => {}
                     }
                 }
                 out
             }
         }
-    }
-    /// Select n unique elements according to the weight, the higher the weight, the higher the front
-    pub fn random_sample(&self, count: usize, mut rng: impl Rng) -> Vec<&T> {
-        let mut shuffle = self.shuffle(&mut rng);
-        shuffle.truncate(count);
-        shuffle
     }
 }
