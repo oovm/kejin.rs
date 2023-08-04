@@ -1,28 +1,35 @@
 #![allow(clippy::wrong_self_convention)]
 
+mod builder;
+mod display;
 mod sample;
 
-use std::collections::{BTreeMap, HashMap};
-use std::mem::take;
-use rand::{Rng, RngCore, SeedableRng};
-use rand::rngs::StdRng;
+use rand::Rng;
+use std::{collections::BTreeMap, mem::take, ops::AddAssign};
 
-pub(crate) struct WeightedElement<T> {
-    key: T,
-    weight: f64,
-    accumulated: f64,
+#[derive(Debug)]
+pub struct WeightedElement<T> {
+    pub key: T,
+    pub weight: f64,
+    pub accumulated: f64,
 }
 
+#[derive(Debug)]
 pub struct WeightedList<T> {
     items: Vec<WeightedElement<T>>,
+    total: f64,
 }
 
 impl<T> WeightedList<T> {
+    /// Get the total weight of all elements
     pub fn total_weight(&self) -> f64 {
-        self.items.last().map_or(0.0, |elem| elem.accumulated)
+        self.total
     }
-
-    pub fn merge(&mut self) where T: Ord {
+    /// Reorganize and merge elements with the same name to speed up sampling
+    pub fn merge(&mut self)
+    where
+        T: Ord,
+    {
         if self.items.is_empty() {
             return;
         }
@@ -32,43 +39,44 @@ impl<T> WeightedList<T> {
         }
         self.items = WeightedList::from_iter(new).items;
     }
-
+    /// Randomly select an element based on weight, the higher the weight, the easier it is to be selected.
+    pub fn random(&self, mut rng: impl Rng) -> Option<&T> {
+        if self.items.is_empty() {
+            return None;
+        }
+        let total_weight = self.total_weight();
+        let random_weight = rng.gen_range(0.0..total_weight);
+        let index =
+            self.items.binary_search_by(|elem| elem.accumulated.partial_cmp(&random_weight).unwrap()).unwrap_or_else(|i| i);
+        Some(&self.items[index].key)
+    }
+    /// Rearrange all elements according to weight, the higher the weight, the higher the front.
     pub fn shuffle(&self, mut rng: impl Rng) -> Vec<&T> {
         let mut order: Vec<_> = self
             .items
             .iter()
-            .enumerate()
-            .map(|(i, elem)| (i, -(rng.gen::<f64>().powf(1.0 / elem.weight as f64))))
+            .enumerate() //
+            .map(|(i, e)| (i, -(rng.gen::<f64>().powf(1.0 / e.weight))))
             .collect();
-
         // Sort the elements based on the negative random power
         order.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-
         // Extract the shuffled items using the sorted order
         order.iter().map(|(i, _)| &self.items[*i].key).collect()
     }
-}
-
-impl<T> FromIterator<(T, f64)> for WeightedList<T> {
-    fn from_iter<I: IntoIterator<Item=(T, f64)>>(iter: I) -> Self {
-        let sequence = iter.into_iter();
-        let mut accumulated = 0.0;
-        let mut cumulative = Vec::with_capacity(sequence.size_hint().0);
-        for (key, weight) in sequence {
-            if weight >= 0.0 {
-                accumulated += weight;
-                cumulative.push(WeightedElement {
-                    key,
-                    weight,
-                    accumulated,
-                });
-            } else {
-                // nan, negative, zero, inf
+    /// Select n elements according to the weight, the higher the weight, the easier it is to be selected
+    pub fn random_select(&self, count: usize, mut rng: impl Rng) -> Vec<&T> {
+        let mut out = Vec::with_capacity(count);
+        for _ in 0..count {
+            if let Some(item) = self.random(&mut rng) {
+                out.push(item);
             }
         }
-
-        WeightedList {
-            items: cumulative,
-        }
+        out
+    }
+    /// Select n unique elements according to the weight, the higher the weight, the higher the front
+    pub fn random_sample(&self, count: usize, mut rng: impl Rng) -> Vec<&T> {
+        let mut shuffle = self.shuffle(&mut rng);
+        shuffle.truncate(count);
+        shuffle
     }
 }

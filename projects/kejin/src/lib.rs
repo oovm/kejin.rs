@@ -3,4 +3,4 @@ mod traits;
 
 pub use traits::Weighted;
 
-pub use self::draw_cards::WeightedList;
+pub use self::draw_cards::{WeightedElement, WeightedList};
