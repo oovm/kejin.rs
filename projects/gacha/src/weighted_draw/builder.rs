@@ -1,5 +1,4 @@
 use super::*;
-use std::slice::Iter;
 
 impl<T> WeightedList<T> {
     /// Create a new empty weighted list with given capacity

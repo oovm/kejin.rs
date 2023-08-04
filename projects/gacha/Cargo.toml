@@ -1,15 +1,16 @@
 [package]
-name = "kejin"
-version = "0.0.0"
+name = "gacha"
+version = "0.0.1"
 authors = ["Aster <192607617@qq.com>"]
-description = "Hamiltonian path solver"
-repository = "https://github.com/oovm/knights-tour"
-documentation = "https://docs.rs/hamiltonian"
+description = "Efficient gacha algorithm for high performance game servers"
+repository = "https://github.com/oovm/kejin.rs"
+documentation = "https://docs.rs/gacha"
 readme = "Readme.md"
 license = "MPL-2.0"
 edition = "2021"
 
 [dependencies]
+log = "0.4.17"
 itertools = "0.10.5"
 rand = { version = "0.8.5", features = ["small_rng"] }
 

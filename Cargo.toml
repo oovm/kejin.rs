@@ -2,7 +2,7 @@
 resolver = "2"
 members = ["projects/*"]
 default-members = [
-    "projects/kejin",
+    "projects/gacha",
 ]
 exclude = [
     "projects/.DS_Store",
