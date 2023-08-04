@@ -1,7 +1,15 @@
-# IDE
-.idea/**
+# OS
+.DS_Store/
+thumbs.db
+time-travel.*
 
+# IDE
+.vscode/
+dist/
+.vs/
+.idea/
+*.iml
 
 # Rust
+target/
 Cargo.lock
-yarn-error.log
