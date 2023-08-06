@@ -2,9 +2,9 @@ use super::*;
 
 
 /// Basic reinforcement model parameters
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EnhanceLevel<T> {
+pub struct EnhanceLevel<T: Ord> {
     /// The level increased when the reinforcement is successful
     #[cfg_attr(feature = "serde", serde(default))]
     pub relative_rate: BTreeMap<i16, f64>,
@@ -22,7 +22,7 @@ pub struct EnhanceLevel<T> {
 
 
 
-impl<T> EnhanceLevel<T> {
+impl<T: Ord> EnhanceLevel<T> {
     /// Create a simple reinforcement model
     ///
     /// # Arguments

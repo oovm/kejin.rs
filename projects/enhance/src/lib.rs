@@ -3,5 +3,5 @@ mod basic;
 
 pub use self::{
     advance::EnhanceModifier,
-    basic::{level::EnhanceLevel, state::EnhanceState},
+    basic::{level::{EnhanceLevel, EnhanceMap}, state::EnhanceState},
 };

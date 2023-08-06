@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EnhanceModifier<T> {
+pub struct EnhanceModifier<T: Ord> {
     /// Situation when no additional material is used
     pub basic: EnhanceLevel<T>,
     /// The level increased when the reinforcement is successful
