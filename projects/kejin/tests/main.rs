@@ -13,7 +13,7 @@ fn test() {
     let map = EnhanceMap::<String> {
         mapping:mappings,
     };
-    println!("{:?}", map);
+    println!("{}", map.as_matrix().as_wolfram(false));
     let json = serde_json::to_string_pretty( &map).unwrap();
     println!("{}", json);
 }

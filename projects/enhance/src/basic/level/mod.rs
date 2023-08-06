@@ -54,7 +54,7 @@ impl<T: Ord> EnhanceLevel<T> {
         }
     }
 
-    fn total_rate(&self) -> f64
+    pub fn total_rate(&self) -> f64
     {
 
 
