@@ -2,18 +2,18 @@ use super::*;
 
 
 /// Basic reinforcement model parameters
-#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EnhanceLevel<T, R> {
+pub struct EnhanceLevel<T> {
     /// The level increased when the reinforcement is successful
     #[cfg_attr(feature = "serde", serde(default))]
-    pub relative_rate: BTreeMap<i16, R>,
+    pub relative_rate: BTreeMap<i16, f64>,
     /// Jump to this level when strengthening fails
     #[cfg_attr(feature = "serde", serde(default))]
-    pub absolute_rate: BTreeMap<u16, R>,
+    pub absolute_rate: BTreeMap<u16, f64>,
     /// Weight of equipment broken
     #[cfg_attr(feature = "serde", serde(default))]
-    pub broken_rate: R,
+    pub broken_rate: f64,
     /// The amount of resources that need to be consumed for strengthening
     #[cfg_attr(feature = "serde", serde(default))]
     pub enhance_cost: BTreeMap<T, u128>,
@@ -22,7 +22,7 @@ pub struct EnhanceLevel<T, R> {
 
 
 
-impl<T, R> EnhanceLevel<T, R> {
+impl<T> EnhanceLevel<T> {
     /// Create a simple reinforcement model
     ///
     /// # Arguments
@@ -36,7 +36,7 @@ impl<T, R> EnhanceLevel<T, R> {
     /// ```
     ///
     /// ```
-    pub fn simple(success: R, failure: R, change: i16) -> Self where R:Default {
+    pub fn simple(success: f64, failure: f64, change: i16) -> Self{
         let mut relative_rate = BTreeMap::new();
         relative_rate.insert(1, success);
         relative_rate.insert(change, failure);
@@ -48,18 +48,12 @@ impl<T, R> EnhanceLevel<T, R> {
         }
     }
 
-    fn total_rate(&self) -> R
-    where
-        R: Clone + Add<R, Output = R>,
+    fn total_rate(&self) -> f64
+
     {
-        let mut out = self.broken_rate.clone();
-        for weight in self.relative_rate.values() {
-            out = out.add(weight.clone());
-        }
-        for weight in self.absolute_rate.values() {
-            out = out.add(weight.clone());
-        }
-        out
+
+
+        self.broken_rate + self.relative_rate.values().sum::<f64>() + self.absolute_rate.values().sum::<f64>()
     }
 }
 
