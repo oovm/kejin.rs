@@ -25,8 +25,26 @@ impl <T: Ord> EnhanceMap<T> {
         self.mapping.values().any(|level| level.broken_rate > 0.0)
     }
 
-    pub fn max_level(&self) -> u16 {
-        *self.mapping.keys().max().unwrap_or(&0)
+    pub fn max_level(&self) -> usize {
+        let mut max = 0;
+        for (level, data) in &self.mapping {
+            for i in data.relative_rate.keys() {
+                let level = *level as usize + *i as usize;
+                if level > max {
+                    max = level;
+                }
+            }
+            for i in data.absolute_rate.keys() {
+                let level = *i as usize;
+                if level > max {
+                    max = level;
+                }
+            }
+            if *level as usize > max {
+                max = *level as usize;
+            }
+        }
+        max
     }
 
     pub fn as_matrix(&self) -> EnhanceMatrix {
@@ -54,30 +72,52 @@ impl <T: Ord> EnhanceMap<T> {
     }
 }
 
-impl EnhanceMatrix {
-    pub fn as_wolfram(&self, rationalize: bool) -> String {
-        let mut out = String::new();
-        out.push_str("ℳ = ");
-        if rationalize {
-            out.push_str("Rationalize@");
+struct WolframMatrix<'a> {
+    matrix: &'a DMatrix<f64>,
+    rationalize: bool,
+    breakable: bool,
+}
+
+impl<'a> Display for WolframMatrix<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ℳ = ")?;
+        if self.rationalize {
+            f.write_str("Rationalize@")?;
         }
-        out.push_str("{");
         for (i, row) in self.matrix.row_iter().enumerate() {
             if i > 0 {
-                out.push_str(", ");
+                f.write_str("},\n    {")?;
             }
-            out.push_str("{");
+            else {
+                f.write_str("{\n    {")?;
+            }
+
             for (j, value) in row.iter().enumerate() {
                 if j > 0 {
-                    out.push_str(", ");
+                    f.write_str(", ")?;
                 }
-                out.push_str(&value.to_string());
+                write!(f, "{}", value)?;
             }
-            out.push_str("}");
+
         }
-        out.push_str("};");
-        out.push_str("ℙ = DiscreteMarkovProcess[1, ℳ];");
-        out.push_str("Table[PDF[FirstPassageTimeDistribution[ℙ, 6], x], {x, 0, 6*2}]");
-        out
+        f.write_str("}\n};\n")?;
+        if self.breakable {
+            f.write_str("𝒫 = DiscreteMarkovProcess[2, ℳ];")?
+        }
+        else {
+            f.write_str("𝒫 = DiscreteMarkovProcess[1, ℳ];")?
+        }
+        writeln!(f, "Table[PDF[FirstPassageTimeDistribution[𝒫, 6], x], {{x, 0, 6*2}}]")
+    }
+}
+
+impl EnhanceMatrix {
+    pub fn as_wolfram(&self, rationalize: bool) -> String {
+        let matrix = WolframMatrix {
+            matrix: &self.matrix,
+            rationalize,
+            breakable: self.breakable,
+        };
+        matrix.to_string()
     }
 }
