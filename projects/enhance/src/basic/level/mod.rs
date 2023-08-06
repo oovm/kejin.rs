@@ -49,7 +49,6 @@ impl<T> EnhanceLevel<T> {
     }
 
     fn total_rate(&self) -> f64
-
     {
 
 
