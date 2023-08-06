@@ -2,6 +2,8 @@ pub mod level;
 pub mod state;
 pub mod display;
 pub mod mapping;
+#[cfg(feature = "serde")]
+pub mod ser_der;
 
 use crate::EnhanceLevel;
 use std::{
@@ -11,6 +13,3 @@ use std::{
 use std::fmt::{Display, Formatter, Write};
 use nalgebra::DMatrix;
 
-pub struct EnhanceCost<T> {
-    items: BTreeMap<T, u128>,
-}

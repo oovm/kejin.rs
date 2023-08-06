@@ -8,6 +8,7 @@ pub struct TeXMatrix {
 
 }
 
+
 pub struct WolframFormat {
     matrix: DMatrix<f64>,
     rationalize: bool,
