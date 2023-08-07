@@ -25,45 +25,22 @@ impl <T: Ord> EnhanceMap<T> {
         self.mapping.values().any(|level| level.broken_rate > 0.0)
     }
 
-    pub fn max_level(&self) -> usize {
-        let mut max = 0;
-        for (level, data) in &self.mapping {
-            for i in data.relative_rate.keys() {
-                let level = *level as usize + *i as usize;
-                if level > max {
-                    max = level;
-                }
-            }
-            for i in data.absolute_rate.keys() {
-                let level = *i as usize;
-                if level > max {
-                    max = level;
-                }
-            }
-            if *level as usize > max {
-                max = *level as usize;
-            }
-        }
-        max
+    pub fn max_level(&self) -> u16 {
+        self.mapping.iter().map(|(level, data)|data.max_level(*level)).max().unwrap_or(0)
     }
 
     pub fn as_matrix(&self) -> EnhanceMatrix {
         if self.breakable() {
             unimplemented!()
         } else {
-            let rank = self.max_level() as usize +1;
-            let mut matrix = DMatrix::from_element(rank, rank, 0.0);
-            for (level, enhance) in self.mapping.iter() {
-                let total_rate = enhance.total_rate();
-                for (change, rate) in enhance.relative_rate.iter() {
-                    let change = *change as usize;
-                    matrix[(*level as usize, change)] = rate / total_rate;
-                }
-                for (change, rate) in enhance.absolute_rate.iter() {
-                    let change = *change as usize;
-                    matrix[(*level as usize, change)] = rate / total_rate;
-                }
+            let max = self.max_level() as usize;
+            let mut matrix = DMatrix::from_element(max +1, max +1, 0.0);
+            for (base, data) in &self.mapping {
+               for (level, rate) in  data.as_absolute(*base).absolute_rate {
+                     matrix[(*base as usize, level as usize)] = rate;
+               }
             }
+            matrix[(max, max)] = 1.0;
             EnhanceMatrix {
                 matrix,
                 breakable: false,
@@ -102,12 +79,39 @@ impl<'a> Display for WolframMatrix<'_> {
         }
         f.write_str("}\n};\n")?;
         if self.breakable {
-            f.write_str("𝒫 = DiscreteMarkovProcess[2, ℳ];")?
+            f.write_str("𝒫 = DiscreteMarkovProcess[2, ℳ];\n")?;
+            writeln!(f, "Table[PDF[FirstPassageTimeDistribution[𝒫, 6], x], {{x, 0, 6*2}}]")
         }
         else {
-            f.write_str("𝒫 = DiscreteMarkovProcess[1, ℳ];")?
+            f.write_str("𝒫 = DiscreteMarkovProcess[1, ℳ];\n")?;
+            let rows = self.matrix.nrows();
+            f.write_str(r#"
+
+steps = Range[1,18];
+selected = Range[1,5];
+legends = "+"<>ToString[#]&/@selected;
+𝒫 = DiscreteMarkovProcess[1,ℳ];
+
+cdf=Table[{j,CDF[FirstPassageTimeDistribution[𝒫,i],j]},{i,selected+1},{j,steps}];
+mean=Table[Mean@FirstPassageTimeDistribution[𝒫,i],{i,5}];
+m1=Table[Quantile[FirstPassageTimeDistribution[𝒫,i],0.05],{i,5}];
+m2=Table[Quantile[FirstPassageTimeDistribution[𝒫,i],0.25],{i,5}];
+m3=Table[Quantile[FirstPassageTimeDistribution[𝒫,i],0.50],{i,5}];
+m4=Table[Quantile[FirstPassageTimeDistribution[𝒫,i],0.75],{i,5}];
+m5=Table[Quantile[FirstPassageTimeDistribution[𝒫,i],0.95],{i,5}];
+
+plotPDF[]:=Block[
+    {pdf},
+    pdf=Table[{j,PDF[FirstPassageTimeDistribution[𝒫,i],j]},{i,selected+1},{j,steps}];
+    ListLinePlot[pdf,PlotLegends->legends,AxesLabel->{"强化次数","达成概率"},PlotLabel->"首次达成概率", PlotRange->Full, Mesh->Full,PlotTheme->"FullAxesGrid",PlotStyle->24]
+];
+plotPDF[]
+cp=ListLinePlot[cdf, PlotRange->Full,Mesh->Full,PlotLegends->legends,AxesLabel->{"强化次数","达成概率"},PlotStyle->24,PlotLabel->"累计达成概率",PlotTheme->"Scientific"]
+mp=ListLinePlot[{mean,m1,m2,m3,m4,m5},AxesLabel->{"强化等级","强化次数"},PlotLegends->{"平均达成次数","5%达成次数","25%达成次数","中位达成次数","75%达成次数","95%达成次数"},PlotStyle->114, PlotRange->Full,Mesh->Full,PlotTheme->{"Default", "Grid"}]
+
+            "#)
+
         }
-        writeln!(f, "Table[PDF[FirstPassageTimeDistribution[𝒫, 6], x], {{x, 0, 6*2}}]")
     }
 }
 
